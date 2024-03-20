@@ -61,25 +61,6 @@ function fn_view(volunSeq){
       <div style="display: flex; justify-content: center;">
          <table class="table-auto " style="width:900px; justify-content: center;" >
            <tbody>
-           <!--  
-             <tr >
-               <td class="align-center" style="width:300px; height:200px; margin-right:10px">
-                 <img src="/resources/images/child.png" style="width:300px; height:170px;">
-               </td>
-               <td class="px-4" style="width:500px; height:200px; margin-right:10px">
-                 <p style="font-size: 20px;" class="font-semibold"><a href="/volunteer/volunView">광주학습관 어린이집 봉사활동!</a></p>
-                 <p class="text-sm text-gray-600" style="font-size: 15px">모집기간 : 2024.02.27 ~ 2019.04.09</p>
-               </td>
-               <td>
-                 <button type="button" id="btnReply" style="float: right; background-color: #dede9e;margin-top:35px; padding:10%">모 집 중</button>
-               </td>
-             </tr>
-             <tr>
-               <td colspan="4" class="py-4">
-                 <div class="border-t-2 border-gray-200"></div>
-               </td>
-             </tr>
-             -->
              
      <c:if test="${!empty list}">
 		<c:forEach var="volun" items="${list}" varStatus = "status">

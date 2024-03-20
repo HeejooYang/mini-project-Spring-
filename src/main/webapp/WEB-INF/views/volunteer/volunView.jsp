@@ -204,7 +204,7 @@ geocoder.addressSearch(addr, function(result, status) {
 				</div>
 		</div>
 	</div>
-	<!— end single article section —>
+	<!--   end single article section -->
 	 
 </body>
 </html>
