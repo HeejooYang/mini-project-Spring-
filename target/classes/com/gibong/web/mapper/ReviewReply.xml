@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gibong.web.dao.ReviewReplyDao">
+	<!-- 댓글 resultMap -->
+	<resultMap type="com.gibong.web.model.ReviewReply" id="reviewReplyResultMap">
+		<id column="REVIEW_REPLY_SEQ" property="reviewReplySeq" />
+		<result column="USER_ID" property="userId" />
+		<result column="REVIEW_SEQ" property="reviewSeq" />
+		<result column="REPLY_DEL_FLAG" property="replyDelFlag" />
+		<result column="REVIEW_REPLY_CONTENT" property="reviewReplyContent" />
+		<result column="REVIEW_REPLY_GROUP" property="reviewReplyGroup" />
+		<result column="REVIEW_REPLY_ORDER" property="reviewReplyOrder" />
+		<result column="REVIEW_REPLY_INDENT" property="reviewReplyIndent" />
+		<result column="REGDATE" property="regdate" />	
+		<result column="USER_NAME" property="userName" />	
+	</resultMap>
+	
+	<!-- 후기에 해당하는 댓글 조회  -->
+	
+	<select id="replySelect" parameterType="long" resultMap="reviewReplyResultMap">
+		SELECT
+		    NVL(B.USER_ID,'') AS USER_ID,
+		    NVL(B.USER_NAME,'') AS USER_NAME,
+		    A.REVIEW_REPLY_SEQ AS REVIEW_REPLY_SEQ,
+		    NVL(A.REVIEW_SEQ,0) AS REVIEW_SEQ,
+		    NVL(A.REPLY_DEL_FLAG,'') AS REPLY_DEL_FLAG,
+		    NVL(A.REVIEW_REPLY_CONTENT,'') AS REVIEW_REPLY_CONTENT,
+		    NVL(A.REVIEW_REPLY_GROUP,0) AS REVIEW_REPLY_GROUP,
+		    NVL(A.REVIEW_REPLY_ORDER,0) AS REVIEW_REPLY_ORDER,
+		    NVL(A.REVIEW_REPLY_INDENT,0) AS REVIEW_REPLY_INDENT,
+		    NVL(TO_CHAR(A.REGDATE,'YYYY.MM.DD HH24:MI:SS'),'') AS REGDATE
+		FROM
+		    GIBONG_REVIEW_REPLY A, GIBONG_USER B
+		WHERE REVIEW_SEQ = #{value}
+		  AND REPLY_DEL_FLAG = 'N'
+		  AND A.USER_ID = B.USER_ID
+		  ORDER BY A.REVIEW_REPLY_GROUP DESC, A.REVIEW_REPLY_ORDER DESC
+	
+	
+	</select>
+	
+	<!-- 댓글 등록(부모댓글) -->
+	<insert id="replyInsert" parameterType="com.gibong.web.model.ReviewReply" >
+		<!-- 선행처리기 (시퀀스 생성) -->
+		<selectKey resultType="long" keyProperty="reviewReplySeq" order="BEFORE" >
+			SELECT SEQ_GIBONG_REVIEW_REPLY_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+	
+		INSERT INTO GIBONG_REVIEW_REPLY (
+		    USER_ID,
+		    REVIEW_REPLY_SEQ,
+		    REVIEW_SEQ,
+		    REPLY_DEL_FLAG,
+		    REVIEW_REPLY_CONTENT,
+		    REVIEW_REPLY_GROUP,
+		    REVIEW_REPLY_ORDER,
+		    REVIEW_REPLY_INDENT,
+		    REGDATE
+		) VALUES (
+		    #{userId},
+		    #{reviewReplySeq},
+		    #{reviewSeq},
+		    #{replyDelFlag},
+		    #{reviewReplyContent},
+		    #{reviewReplySeq},
+		    #{reviewReplyOrder},
+		    0,
+		    SYSDATE
+		)
+	
+	</insert> 
+	
+	<!-- 대댓글 등록 -->
+	<insert id="reReplyInsert" parameterType="com.gibong.web.model.ReviewReply" >
+		<!-- 선행처리기 (시퀀스 생성) -->
+		<selectKey resultType="long" keyProperty="reviewReplySeq" order="BEFORE" >
+			SELECT SEQ_GIBONG_REVIEW_REPLY_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+	
+		INSERT INTO GIBONG_REVIEW_REPLY (
+		    USER_ID,
+		    REVIEW_REPLY_SEQ,
+		    REVIEW_SEQ,
+		    REPLY_DEL_FLAG,
+		    REVIEW_REPLY_CONTENT,
+		    REVIEW_REPLY_GROUP,
+		    REVIEW_REPLY_ORDER,
+		    REVIEW_REPLY_INDENT,
+		    REGDATE
+		) VALUES (
+		    #{userId},
+		    #{reviewReplySeq},
+		    #{reviewSeq},
+		    #{replyDelFlag},
+		    #{reviewReplyContent},
+		    #{reviewReplyGroup},
+		    #{reviewReplyOrder},
+		    1,
+		    SYSDATE
+		)
+	</insert>
+	
+	<!--GIBONG_REVIEW_REPLY의 reviewReplyOrder 수정--><!-- 사용안함 -->
+	<update id="reviewReplyGroupUpdate" parameterType="com.gibong.web.model.ReviewReply">
+		UPDATE GIBONG_REVIEW_REPLY
+		   SET REVIEW_REPLY_ORDER = REVIEW_REPLY_ORDER + 1
+		 WHERE REVIEW_REPLY_GROUP = #{reviewReplyGroup}
+		   AND REVIEW_REPLY_ORDER <![CDATA[>=]]>#{reviewReplyOrder}
+	
+	
+	</update>
+	
+	<!-- 댓글 삭제 -->
+	<delete id="replyDelete" parameterType="long">
+		DELETE FROM GIBONG_REVIEW_REPLY
+		 WHERE REVIEW_REPLY_SEQ = #{value}
+	</delete>
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</mapper>

@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gibong.web.dao.ReviewDao">
+	<!-- 게시판 resultMap -->
+	<resultMap type="com.gibong.web.model.Review" id="reviewResultMap">
+		<id column="REVIEW_SEQ" property="reviewSeq" />
+		<result column="USER_ID" property="userId" />
+		<result column="USER_NAME" property="userName" />
+		<result column="REVIEW_TITLE" property="reviewTitle" />
+		<result column="REVIEW_CONTENT" property="reviewContent" />
+		<result column="REVIEW_DEL_FLAG" property="reviewDelFlag" />
+		<result column="REVIEW_READ_CNT" property="reviewReadCnt" />
+		<result column="REVIEW_LIKE_CNT" property="reviewLikeCnt" />
+		<result column="REGDATE" property="regdate" />
+
+	</resultMap>
+	
+	<!-- 첨부파일 resultMap -->
+	<resultMap type="com.gibong.web.model.ReviewFile" id="reviewFileResultMap">
+		<id column="REVIEW_SEQ" property="reviewSeq" />
+		<result column="FILE_SEQ" property="fileSeq" /> 
+		<result column="FILE_ORG_NAME" property="fileOrgName" /> 
+		<result column="FILE_NAME" property="fileName" /> 
+		<result column="FILE_EXT" property="fileExt" /> 
+		<result column="FILE_SIZE" property="fileSize" /> 
+		<result column="REGDATE" property="regdate" /> 
+
+	</resultMap>
+	
+	
+
+<!-- 후기 리스트 -->
+	<select id="reviewList" parameterType="com.gibong.web.model.Review" resultMap="reviewResultMap" >
+			SELECT RNUM,
+			       REVIEW_SEQ,
+			       USER_ID,
+			       USER_NAME,
+			       REVIEW_TITLE,
+			       REVIEW_CONTENT,
+			       REVIEW_DEL_FLAG,
+			       REVIEW_READ_CNT,
+			       REVIEW_LIKE_CNT,
+			       REGDATE
+			FROM(
+			        SELECT ROWNUM RNUM,
+			               REVIEW_SEQ,
+			               USER_ID,
+			               USER_NAME,
+			               REVIEW_TITLE,
+			               REVIEW_CONTENT,
+			               REVIEW_DEL_FLAG,
+			               REVIEW_READ_CNT,
+			               REVIEW_LIKE_CNT,
+			               REGDATE
+			        FROM(
+			                SELECT
+			                    A.REVIEW_SEQ AS REVIEW_SEQ,
+			                    NVL(B.USER_ID,'') AS USER_ID,
+			                    NVL(B.USER_NAME,'') AS USER_NAME,
+			                    NVL(A.REVIEW_TITLE,'') AS REVIEW_TITLE,
+			                    NVL(A.REVIEW_CONTENT,'') AS REVIEW_CONTENT,
+			                    NVL(A.REVIEW_DEL_FLAG,'N') AS REVIEW_DEL_FLAG,
+			                    NVL(A.REVIEW_READ_CNT,0) AS REVIEW_READ_CNT,
+			                    NVL(A.REVIEW_LIKE_CNT,0) AS REVIEW_LIKE_CNT,
+			                    NVL(TO_CHAR(A.REGDATE,'YYYY.MM.DD HH24:MI:SS'),'') AS REGDATE
+			                FROM
+			                    GIBONG_REVIEW A, GIBONG_USER B
+			                    WHERE A.USER_ID = B.USER_ID
+			                    
+			             <if test='searchType != null and searchType !="" and searchValue != null and searchValue !=""'>
+			             	<choose>
+			             		<when test='searchType == "1"'>
+			             		AND B.USER_NAME LIKE '%' || #{searchValue} || '%'
+			             		</when>
+			             		<when test='searchType == "2"'>
+			             		AND A.REVIEW_TITLE LIKE '%' || #{searchValue} || '%'
+			             		</when>
+			             		<when test='searchType == "3"'>
+			             		AND DBMS_LOB.INSTR(A.REVIEW_CONTENT,#{searchValue}) > 0
+			             		</when>
+			             	</choose>
+			             </if>
+			             	
+			             		<if test='reviewFilter == "1" or reviewFilter == "" or reviewFilter == null'>
+			             		ORDER BY A.REGDATE DESC))
+			             		</if>
+			             		<if test='reviewFilter == "2"'>
+			             		ORDER BY A.REVIEW_READ_CNT DESC))
+			             		</if>
+			             		<if test='reviewFilter == "3"'>
+			             		ORDER BY REVIEW_LIKE_CNT DESC))
+			             		</if>
+			             	
+                
+			 WHERE RNUM <![CDATA[>=]]> #{startRow}
+			   AND RNUM <![CDATA[<=]]> #{endRow}
+	</select>
+	
+	<!-- 총 게시물 수  -->
+	<select id="reviewListCount" parameterType="com.gibong.web.model.Review" resultType="long">
+			SELECT
+			        COUNT(A.REVIEW_SEQ) AS CNT
+			  FROM
+			        GIBONG_REVIEW A, GIBONG_USER B
+			 WHERE A.USER_ID = B.USER_ID
+			<if test='searchType != null and searchType !="" and searchValue != null and searchValue !=""'>
+				<choose>
+				 <when test='searchType == "1"'>
+			        AND B.USER_NAME LIKE '%' || #{searchValue} || '%'
+			     </when> 
+			     <when test='searchType == "2"'>   
+			        AND A.REVIEW_TITLE LIKE '%' || #{searchValue} || '%'
+			     </when> 
+			     <when test='searchType == "3"'>  
+			        AND DBMS_LOB.INSTR(A.REVIEW_CONTENT,#{searchValue}) > 0
+				 </when> 
+				</choose>
+			</if>
+	
+	</select>
+	
+	<!-- reviewView 게시물 조회 -->
+	<select id="reviewSelect" parameterType="long" resultMap="reviewResultMap" >
+	           SELECT
+                    A.REVIEW_SEQ AS REVIEW_SEQ,
+                    NVL(B.USER_ID,'') AS USER_ID,
+                    NVL(B.USER_NAME,'') AS USER_NAME,
+                    NVL(A.REVIEW_TITLE,'') AS REVIEW_TITLE,
+                    NVL(A.REVIEW_CONTENT,'') AS REVIEW_CONTENT,
+                    NVL(A.REVIEW_DEL_FLAG,'N') AS REVIEW_DEL_FLAG,
+                    NVL(A.REVIEW_READ_CNT,0) AS REVIEW_READ_CNT,
+                    NVL(A.REVIEW_LIKE_CNT,0) AS REVIEW_LIKE_CNT,
+                    NVL(TO_CHAR(A.REGDATE,'YYYY.MM.DD HH24:MI:SS'),'') AS REGDATE
+                FROM
+                    GIBONG_REVIEW A, GIBONG_USER B
+                    WHERE A.REVIEW_SEQ = #{value} 
+                    AND A.USER_ID = B.USER_ID
+
+	</select>
+	
+	
+	
+	<!-- 게시글 조회수 증가 -->
+	<update id="boardReadCntPlus" parameterType="long">
+	  		UPDATE GIBONG_REVIEW
+   		   	   SET REVIEW_READ_CNT = REVIEW_READ_CNT + 1
+ 		     WHERE REVIEW_SEQ = #{value}
+	</update>
+	
+	<!-- 게시물 등록 -->
+	<insert id="reviewInsert" parameterType="com.gibong.web.model.Review" >
+		<!-- 선행처리기 (시퀀스 생성) -->
+		<selectKey resultType="long" keyProperty="reviewSeq" order="BEFORE" >
+			SELECT SEQ_GIBONG_REVIEW_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+	
+			INSERT INTO GIBONG_REVIEW (
+					    REVIEW_SEQ,
+					    USER_ID,
+					    REVIEW_TITLE,
+					    REVIEW_CONTENT,
+					    REVIEW_DEL_FLAG,
+					    REVIEW_READ_CNT,
+					    REVIEW_LIKE_CNT,
+					    REGDATE
+					) VALUES (
+					    #{reviewSeq},
+					    #{userId},
+					    #{reviewTitle},
+					    #{reviewContent},
+					    #{reviewDelFlag},
+					    #{reviewReadCnt},
+					    #{reviewLikeCnt},
+					    SYSDATE
+					)
+	</insert>
+	
+	
+	<!-- 해당 글에 첨부파일 등록 -->
+	<insert id="reviewFileInsert" parameterType="com.gibong.web.model.ReviewFile"  >
+			INSERT INTO GIBONG_REVIEW_FILE (
+		   			    REVIEW_SEQ,
+		   			    FILE_SEQ,
+		    			FILE_ORG_NAME,
+		    			FILE_NAME,
+		    			FILE_EXT,
+		    			FILE_SIZE,
+		    			REGDATE
+			) VALUES (
+		   				#{reviewSeq},
+		    			#{fileSeq},
+		    			#{fileOrgName},
+		    			#{fileName},
+		            	 #{fileExt},
+		    			#{fileSize},
+		    			SYSDATE
+			)
+	</insert>
+	
+	<!-- 첨부파일 등록할때 새로운 fileSeq값 조회하기 -->
+	<select id="reviewFileSeqNew" parameterType="long" resultType="short">
+		SELECT NVL(MAX(FILE_SEQ),0) + 1 AS FILE_SEQ
+	  	  FROM GIBONG_REVIEW_FILE
+		 WHERE REVIEW_SEQ = #{reviewSeq};
+	
+	</select>
+	
+	<!-- 방금 등록한 글 번호 가져오기 -->
+	<select id="reviewSeqNow" parameterType="String" resultType="long">
+		SELECT NVL(MAX(REVIEW_SEQ),0) AS REVIEW_SEQ
+		  FROM GIBONG_REVIEW
+		 WHERE USER_ID = #{userId}
+	</select>
+	
+	
+	
+	
+	  <!-- 첨부파일 조회 -->
+  <select id="reviewFileSelect" parameterType="long" resultMap="reviewFileResultMap">
+   		SELECT REVIEW_SEQ,
+       		   FILE_SEQ,
+       		   NVL(FILE_ORG_NAME,'') AS FILE_ORG_NAME,
+      		   NVL(FILE_NAME,'') AS FILE_NAME,
+       		   NVL(FILE_EXT,'') AS FILE_EXT,
+       		   NVL(FILE_SIZE,'') AS FILE_SIZE,
+        	   NVL(TO_CHAR(REGDATE,'YYYY.MM.DD HH24:MI:SS'),'') AS REGDATE
+  		  FROM GIBONG_REVIEW_FILE
+		 WHERE REVIEW_SEQ = #{value}
+  </select>
+  
+    <!-- 게시물 수정 -->
+  <update id="reviewUpdate" parameterType="com.gibong.web.model.Review" >
+		 UPDATE GIBONG_REVIEW
+			SET REVIEW_TITLE = #{reviewTitle},
+    			REVIEW_CONTENT = #{reviewContent}
+		  WHERE REVIEW_SEQ = #{reviewSeq}
+		 
+  </update>
+  
+    <!-- 첨부파일 수정 : 첨부파일 삭제 -->
+  <delete id="reviewFileDelete" parameterType="long"> 
+       DELETE FROM GIBONG_REVIEW_FILE
+	 	WHERE REVIEW_SEQ = #{value}
+  </delete>
+  
+    <!-- 게시물 삭제 -->
+<delete id="reviewDelete" parameterType="long">
+ 		DELETE FROM GIBONG_REVIEW
+  		 WHERE REVIEW_SEQ = #{value}
+</delete>  
+
+<!-- LIST 썸네일 모두 조회 -->
+<select id="fileList" resultMap="reviewFileResultMap">
+		SELECT REVIEW_SEQ, 
+		       FILE_NAME
+		  FROM GIBONG_REVIEW_FILE
+</select>
+
+<!-- lIST 썸네일 하나 조회 (fileSeq 1)-->
+<select id="thumbnailList" resultMap="reviewFileResultMap">
+   		SELECT REVIEW_SEQ, 
+		       FILE_NAME
+  		  FROM GIBONG_REVIEW_FILE
+		 WHERE FILE_SEQ = 1
+</select>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+</mapper>
